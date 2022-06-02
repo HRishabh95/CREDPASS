@@ -12,13 +12,6 @@ def medical_term(term):
     else:
         return 0.5
 
-def mean_pooling(model_output, attention_mask):
-    token_embeddings = model_output[0]  # First element of model_output contains all token embeddings
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
-    sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-    return sum_embeddings / sum_mask
-
 def get_attention_mask(tokenized_text,indexed_tokens):
     attention_mask = []
     attention_mask.append(0)
@@ -44,28 +37,86 @@ def get_vector(model,tokens_tensor,hidden_layer=True,hidden_layer_number=2,add=T
             word_embed = torch.cat([hidden_states[i] for i in range(1, len(hidden_states)+1)], dim=-1)
     return word_embed[0]
 
-def get_sentence_vector(vec,attention_mask):
-    attention_mask = torch.transpose(attention_mask, 0, -1)
-    multi_vec=torch.mul(torch.transpose(vec[0], 0, 1), attention_mask)
+def get_s_vector(vec,attention_mask):
+    attention_mask = torch.transpose(torch.tensor(attention_mask), 0, -1)
+    multi_vec=torch.mul(torch.transpose(vec, 0, 1), attention_mask)
     return multi_vec.sum(1)
+
+
+def get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,hidden_layer_number=2,add=True):
+    tokenized_text = tokenizer.tokenize(marked_text)
+    indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
+
+    # Display the words with their indeces.
+    if dynamic_attention:
+        attention_mask = get_attention_mask(tokenized_text, indexed_tokens)
+    else:
+        attention_mask = [1] * len(indexed_tokens)
+        
+    tokens_tensor = torch.tensor([indexed_tokens])
+    model.eval()
+    vec = get_vector(model, tokens_tensor,hidden_layer=hidden_layer,hidden_layer_number=hidden_layer_number,add=add)
+
+    sen_vec = get_s_vector(vec, attention_mask)
+    return sen_vec
+
 
 tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
 model = BertModel.from_pretrained('bert-base-cased',output_hidden_states=True)
 
+marked_text = "[CLS] " + "cancer kills" + " [SEP]"
+
+#Mean of Last 2 hidden layer with dynamic attention
+sen_vec_1_type_1=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,
+                                     hidden_layer_number=2,add=True)
+
+#Mean of last 2 hidden layer with static attention
+sen_vec_1_type_2=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+                                     hidden_layer_number=2,add=True)
+
+#Last layer with dynamic attention
+sen_vec_1_type_3=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=False,
+                                     hidden_layer_number=2,add=True)
 
 
-marked_text = "[CLS] " + "cancer is deadly" + " [SEP]"
-# Split the sentence into tokens.
-tokenized_text = tokenizer.tokenize(marked_text)
+#Last layer with static attention
+sen_vec_1_type_4=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=False,
+                                     hidden_layer_number=2,add=True)
 
 
-indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
+#Last 4 layer with static attention
+sen_vec_1_type_5=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+                                     hidden_layer_number=4,add=True)
 
-# Display the words with their indeces.
+marked_text = "[CLS] " + "cancer safe" + " [SEP]"
 
-attention_mask=get_attention_mask(tokenized_text,indexed_tokens)
-tokens_tensor = torch.tensor([indexed_tokens])
-model.eval()
-vec=get_vector(model,tokens_tensor)
+#Mean of Last 2 hidden layer with dynamic attention
+sen_vec_2_type_1=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,
+                                     hidden_layer_number=2,add=True)
 
-sen_vec=get_sentence_vector(vec,attention_mask)
+#Mean of last 2 hidden layer with static attention
+sen_vec_2_type_2=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+                                     hidden_layer_number=2,add=True)
+
+#Last layer with dynamic attention
+sen_vec_2_type_3=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=False,
+                                     hidden_layer_number=2,add=True)
+
+
+#Last layer with static attention
+sen_vec_2_type_4=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=False,
+                                     hidden_layer_number=2,add=True)
+
+
+#Last 4 layer with static attention
+sen_vec_2_type_5=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+                                     hidden_layer_number=4,add=True)
+
+
+cos=torch.nn.CosineSimilarity(dim=0)
+print(cos(sen_vec_1_type_1,sen_vec_2_type_1))
+print(cos(sen_vec_1_type_2,sen_vec_2_type_2))
+print(cos(sen_vec_1_type_3,sen_vec_2_type_3))
+print(cos(sen_vec_1_type_4,sen_vec_2_type_4))
+print(cos(sen_vec_1_type_5,sen_vec_2_type_5))
+
