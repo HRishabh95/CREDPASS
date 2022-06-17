@@ -1,9 +1,8 @@
 import os.path
 from os import listdir,cpu_count
 from os.path import join
-
+import numpy as np
 import pandas as pd
-import warc
 import requests
 from bs4 import BeautifulSoup
 from langdetect import detect
@@ -16,10 +15,9 @@ list_gzs=listdir(trec_data_path)
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
-list_gzs=random.sample(list_gzs, 20)
-
+list_gzs=random.sample(list_gzs,5)
 def get_html(warc_file):
-    file_path='/home/ubuntu/shared/TREC2020/01_extracted/'
+    file_path='/home/ubuntu/shared/TREC2020/01/'
     file_id = warc_file.header.record_id.split(":")[-1].split(">")[0]
     file_path=f'''{file_path}{file_id}.csv'''
     if not os.path.isfile(file_path):
@@ -37,23 +35,47 @@ def get_html(warc_file):
                return None
 
 
+from warcio.archiveiterator import ArchiveIterator
 file_content=[]
-for list_gz in list_gzs:
-    warc_files=warc.open(join(trec_data_path,list_gz))
-    warc_files=[i for i in warc_files]
-    # processing (multiprocessing)
-    #result = p.map(get_html, warc_files[:10])
-    for warc_file in warc_files:
-        result = get_html(warc_file)
-    # for warc_file in warc_files:
-    #     if warc_file.type=='response':
-    #         try:
-    #             r=requests.get(warc_file.url,headers=headers)
-    #             soup = BeautifulSoup(r.content).get_text().replace('\n', ' ')
-    #             soup = ' '.join(soup.split())
-    #             lang=detect(soup)
-    #             if lang=='en':
-    #                 file_content.append([warc_file.header.record_id.split(":")[-1].split(">")[0], soup])
-    #         except:
-    #             print('URL not reachable')
+for ii,list_gz in enumerate(list_gzs):
+    print(ii,len(list_gzs))
+    with open(join(trec_data_path,list_gz), 'rb') as stream:
+        for record in ArchiveIterator(stream, arc2warc=True):
+            if record.rec_type == 'response':
+                file_id=record.rec_headers.get_header('WARC-Record-ID').split(":")[-1].split(">")[0]
+                content=record.content_stream().read()
+                try:
+                    if len(content)>0:
+                        soup = BeautifulSoup(content).get_text().replace('\n', ' ').replace("\t", ' ')
+                        soup = ' '.join(soup.split())
+                        lang = detect(soup)
+                        if lang == 'en':
+                            file_content.append([file_id, soup])
+                except:
+                    print('Error')
 
+
+trec_file=pd.DataFrame(file_content)
+trec_file.columns=['docno','text']
+for col in trec_file.columns:
+    if trec_file[col].dtype==object:
+        trec_file[col]=trec_file[col].apply(lambda x: np.nan if x==np.nan else str(x).encode('utf-8', 'replace').decode('utf-8'))
+
+trec_file.to_csv(f'''/home/ubuntu/rupadhyay/CREDPASS/TREC_HM_1M.csv''',sep='\t',index=False)
+
+import pandas as pd
+first_df=pd.read_csv(f'''/home/ubuntu/rupadhyay/CREDPASS/TREC_HM_1M.csv''',sep='\t')
+second_df=pd.read_csv(f'''/home/ubuntu/rupadhyay/CREDPASS/TREC_HM_2M.csv''',sep='\t')
+third_df=pd.read_csv(f'''/home/ubuntu/rupadhyay/CREDPASS/TREC_HM_3M.csv''',sep='\t')
+fourth_df=pd.read_csv(f'''/home/ubuntu/rupadhyay/CREDPASS/TREC_HM_4M.csv''',sep='\t')
+
+trec_df=pd.concat([first_df,second_df,third_df,fourth_df])
+
+trec_df.to_csv("/home/ubuntu/rupadhyay/CREDPASS/TREC_1M.csv",sep='\t')
+
+import pandas as pd
+trec_df=pd.read_csv("/home/ubuntu/rupadhyay/CREDPASS/TREC_1M.csv",sep='\t',index_col=0)
+labeled_file=pd.read_csv('/tmp/pycharm_project_889/labeled_trec20201.csv',sep='\t',header=None,index_col=0)
+labeled_file.columns=['docno','text']
+final_file=pd.concat([trec_df,labeled_file]).drop_duplicates().reset_index(drop=True)
+final_file.to_csv('/home/ubuntu/rupadhyay/CREDPASS/TREC2020_1M_labeled.csv',sep='\t')

@@ -6,6 +6,7 @@ medical_words=[i.lower().replace("\n","") for i in medical_words]
 
 ## Hard cutoff
 ##TODO add different type of method for masking
+
 def medical_term(term):
     if term.lower() in medical_words:
         return 1
@@ -43,7 +44,9 @@ def get_s_vector(vec,attention_mask):
     return multi_vec.sum(1)
 
 
-def get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,hidden_layer_number=2,add=True):
+def get_sentence_vector(marked_text,dynamic_attention=False,hidden_layer=False,hidden_layer_number=2,add=True):
+    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+    model = BertModel.from_pretrained('bert-base-cased', output_hidden_states=True)
     tokenized_text = tokenizer.tokenize(marked_text)
     indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
 
@@ -61,62 +64,61 @@ def get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidde
     return sen_vec
 
 
-tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-model = BertModel.from_pretrained('bert-base-cased',output_hidden_states=True)
-
-marked_text = "[CLS] " + "cancer kills" + " [SEP]"
-
-#Mean of Last 2 hidden layer with dynamic attention
-sen_vec_1_type_1=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,
-                                     hidden_layer_number=2,add=True)
-
-#Mean of last 2 hidden layer with static attention
-sen_vec_1_type_2=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
-                                     hidden_layer_number=2,add=True)
-
-#Last layer with dynamic attention
-sen_vec_1_type_3=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=False,
-                                     hidden_layer_number=2,add=True)
-
-
-#Last layer with static attention
-sen_vec_1_type_4=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=False,
-                                     hidden_layer_number=2,add=True)
-
-
-#Last 4 layer with static attention
-sen_vec_1_type_5=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
-                                     hidden_layer_number=4,add=True)
-
-marked_text = "[CLS] " + "cancer safe" + " [SEP]"
-
-#Mean of Last 2 hidden layer with dynamic attention
-sen_vec_2_type_1=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,
-                                     hidden_layer_number=2,add=True)
-
-#Mean of last 2 hidden layer with static attention
-sen_vec_2_type_2=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
-                                     hidden_layer_number=2,add=True)
-
-#Last layer with dynamic attention
-sen_vec_2_type_3=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=False,
-                                     hidden_layer_number=2,add=True)
-
-
-#Last layer with static attention
-sen_vec_2_type_4=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=False,
-                                     hidden_layer_number=2,add=True)
-
-
-#Last 4 layer with static attention
-sen_vec_2_type_5=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
-                                     hidden_layer_number=4,add=True)
-
-
-cos=torch.nn.CosineSimilarity(dim=0)
-print(cos(sen_vec_1_type_1,sen_vec_2_type_1))
-print(cos(sen_vec_1_type_2,sen_vec_2_type_2))
-print(cos(sen_vec_1_type_3,sen_vec_2_type_3))
-print(cos(sen_vec_1_type_4,sen_vec_2_type_4))
-print(cos(sen_vec_1_type_5,sen_vec_2_type_5))
-
+# tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+#model = BertModel.from_pretrained('bert-base-cased',output_hidden_states=True)
+# marked_text = "[CLS] " + "cancer kills" + " [SEP]"
+#
+# #Mean of Last 2 hidden layer with dynamic attention
+# sen_vec_1_type_1=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,
+#                                      hidden_layer_number=2,add=True)
+#
+# #Mean of last 2 hidden layer with static attention
+# sen_vec_1_type_2=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+#                                      hidden_layer_number=2,add=True)
+#
+# #Last layer with dynamic attention
+# sen_vec_1_type_3=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=False,
+#                                      hidden_layer_number=2,add=True)
+#
+#
+# #Last layer with static attention
+# sen_vec_1_type_4=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=False,
+#                                      hidden_layer_number=2,add=True)
+#
+#
+# #Last 4 layer with static attention
+# sen_vec_1_type_5=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+#                                      hidden_layer_number=4,add=True)
+#
+# marked_text = "[CLS] " + "cancer safe" + " [SEP]"
+#
+# #Mean of Last 2 hidden layer with dynamic attention
+# sen_vec_2_type_1=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=True,
+#                                      hidden_layer_number=2,add=True)
+#
+# #Mean of last 2 hidden layer with static attention
+# sen_vec_2_type_2=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+#                                      hidden_layer_number=2,add=True)
+#
+# #Last layer with dynamic attention
+# sen_vec_2_type_3=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=True,hidden_layer=False,
+#                                      hidden_layer_number=2,add=True)
+#
+#
+# #Last layer with static attention
+# sen_vec_2_type_4=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=False,
+#                                      hidden_layer_number=2,add=True)
+#
+#
+# #Last 4 layer with static attention
+# sen_vec_2_type_5=get_sentence_vector(marked_text,tokenizer,model,dynamic_attention=False,hidden_layer=True,
+#                                      hidden_layer_number=4,add=True)
+#
+#
+# cos=torch.nn.CosineSimilarity(dim=0)
+# print(cos(sen_vec_1_type_1,sen_vec_2_type_1))
+# print(cos(sen_vec_1_type_2,sen_vec_2_type_2))
+# print(cos(sen_vec_1_type_3,sen_vec_2_type_3))
+# print(cos(sen_vec_1_type_4,sen_vec_2_type_4))
+# print(cos(sen_vec_1_type_5,sen_vec_2_type_5))
+#

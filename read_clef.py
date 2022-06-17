@@ -4,16 +4,16 @@ dataset_path='/home/ubuntu/rupadhyay/dataset/CLEF2020/'
 from os import listdir
 from os.path import isfile, join
 from langdetect import detect
-
+import numpy as np
 # onlyfiles = [f'''{dataset_path}{f}/{j}''' for f in listdir(dataset_path) for j in listdir(join(dataset_path,f))]
 # df_files=pd.DataFrame(onlyfiles,columns=['filename'])
-# onlyfiles=df_files['filename'].sample(n=1200000,random_state=49)
+# onlyfiles=df_files['filename'].sample(n=1500000,random_state=49)
 # onlyfiles.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef_files.csv',index=False)
 
 onlyfiles=pd.read_csv("/home/ubuntu/rupadhyay/CREDPASS/Clef_files.csv")
 file_content=[]
 for ii,file in onlyfiles.iterrows():
-    if ii%100==0:
+    if ii%10000==0:
         print(ii)
     soup=BeautifulSoup(open(file['filename']).read()).get_text().replace('\n',' ')
     soup=' '.join(soup.split())
@@ -25,10 +25,16 @@ for ii,file in onlyfiles.iterrows():
     except:
         print("Text not good")
 
+clef_file=pd.DataFrame(file_content)
+clef_file.columns=['docno','text']
+for col in clef_file.columns:
+    if clef_file[col].dtype==object:
+        clef_file[col]=clef_file[col].apply(lambda x: np.nan if x==np.nan else str(x).encode('utf-8', 'replace').decode('utf-8'))
 
-file_con=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M.csv',sep='\t')
+clef_file.to_csv(f'''/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M.csv''',sep='\t',index=False)
+#file_con=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M.csv',sep='\t')
 
 labeled_file=pd.read_csv('/tmp/pycharm_project_889/labeled_clef2020.csv',sep='\t')
 
-final_file=pd.concat([file_con,labeled_file]).drop_duplicates().reset_index(drop=True)
+final_file=pd.concat([clef_file,labeled_file]).drop_duplicates().reset_index(drop=True)
 final_file.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled.csv',sep='\t')

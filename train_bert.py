@@ -1,4 +1,4 @@
-from transformers import BertTokenizer, BertForPreTraining
+from transformers import BertTokenizer, BertForNextSentencePrediction
 import torch
 import pandas as pd
 from langdetect import detect
@@ -7,10 +7,10 @@ import string
 
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertForPreTraining.from_pretrained('bert-base-uncased')
+model = BertForNextSentencePrediction.from_pretrained('bert-base-uncased')
 
 final_file=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled.csv',sep='\t',index_col=0)
-texts=final_file.sample(n=10000,random_state=49)['text'].values
+texts=final_file.sample(n=50000,random_state=49)['text'].values
 
 text=[]
 for txts in texts:
@@ -105,7 +105,7 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # and move our model over to the selected device
 model.to(device)
 
-
+model.zero_grad()
 
 ##### Activation
 
@@ -133,9 +133,11 @@ for epoch in range(epochs):
         # pull all tensor batches required for training
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
+        token_type_ids = batch['token_type_ids'].to(device)
         labels = batch['labels'].to(device)
         # process
         outputs = model(input_ids, attention_mask=attention_mask,
+                        token_type_ids=token_type_ids,
                         labels=labels)
         # extract loss
         loss = outputs.loss
@@ -146,3 +148,6 @@ for epoch in range(epochs):
         # print relevant info to progress bar
         loop.set_description(f'Epoch {epoch}')
         loop.set_postfix(loss=loss.item())
+
+
+model.save_pretrained('/home/ubuntu/rupadhyay/CREDPASS/CLEF-50k-bert-uncased-10epochs')
