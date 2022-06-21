@@ -5,8 +5,6 @@ import pytrec_eval
 if not pt.started():
   pt.init()
 import sys
-
-
 os.environ['JAVA_HOME'] = "/usr/lib/jvm/java-1.11.0-openjdk-amd64/"
 import re
 import string
@@ -78,3 +76,5 @@ docs=pd.read_csv(config[data_set]['file_path'],sep='\t',index_col=0)
 docs=docs[['docno','text']]
 merged_results=pd.merge(results,docs,on=['docno'],how='inner')
 merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25.csv',sep='\t',index=None)
+merged_results['text']=merged_results['text'].apply(clean_en_text)
+merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25_clean.csv',sep='\t',index=None)

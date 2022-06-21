@@ -10,7 +10,7 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForNextSentencePrediction.from_pretrained('bert-base-uncased')
 
 final_file=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled.csv',sep='\t',index_col=0)
-texts=final_file.sample(n=50000,random_state=49)['text'].values
+texts=final_file.sample(n=150000,random_state=49)['text'].values
 
 text=[]
 for txts in texts:
@@ -150,4 +150,4 @@ for epoch in range(epochs):
         loop.set_postfix(loss=loss.item())
 
 
-model.save_pretrained('/home/ubuntu/rupadhyay/CREDPASS/CLEF-50k-bert-uncased-10epochs')
+model.save_pretrained('/home/ubuntu/rupadhyay/CREDPASS/CLEF-150k-bert-uncased-10epochs')
