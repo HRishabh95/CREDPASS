@@ -1,12 +1,11 @@
 from transformers import BertTokenizer, BertModel
 import torch
 
-medical_words=open('medical_term.txt').readlines()
+medical_words=open('medical_term.txt',encoding='utf-8').readlines()
 medical_words=[i.lower().replace("\n","") for i in medical_words]
 
 ## Hard cutoff
 ##TODO add different type of method for masking
-
 def medical_term(term):
     if term.lower() in medical_words:
         return 1
@@ -18,7 +17,6 @@ def get_attention_mask(tokenized_text,indexed_tokens):
     attention_mask.append(0)
     for tup in zip(tokenized_text[1:-1], indexed_tokens[1:-1]):
         attention_mask.append(medical_term(tup[0]))
-        print('{:<12} {:>6,}'.format(tup[0], tup[1]))
     attention_mask.append(0)
     return attention_mask
 
@@ -44,9 +42,12 @@ def get_s_vector(vec,attention_mask):
     return multi_vec.sum(1)
 
 
-def get_sentence_vector(marked_text,dynamic_attention=False,hidden_layer=False,hidden_layer_number=2,add=True):
-    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-    model = BertModel.from_pretrained('bert-base-cased', output_hidden_states=True)
+def get_sentence_vector(text,dynamic_attention=True,hidden_layer=False,hidden_layer_number=2,add=True):
+    marked_text="[CLS] " + text + " [SEP]"
+    #model_name="dmis-lab/biobert-v1.1"
+    model_name="allenai/scibert_scivocab_uncased"
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+    model = BertModel.from_pretrained(model_name, output_hidden_states=True)
     tokenized_text = tokenizer.tokenize(marked_text)
     indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
 
@@ -57,7 +58,6 @@ def get_sentence_vector(marked_text,dynamic_attention=False,hidden_layer=False,h
         attention_mask = [1] * len(indexed_tokens)
         
     tokens_tensor = torch.tensor([indexed_tokens])
-    model.eval()
     vec = get_vector(model, tokens_tensor,hidden_layer=hidden_layer,hidden_layer_number=hidden_layer_number,add=add)
 
     sen_vec = get_s_vector(vec, attention_mask)

@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import pyterrier as pt
-import pytrec_eval
 if not pt.started():
   pt.init()
 import sys

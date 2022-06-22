@@ -3,8 +3,9 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import math
 from scipy import spatial
-model = SentenceTransformer('pritamdeka/S-BioBert-snli-multinli-stsb', device='cuda')
+from AS_BERT import get_sentence_vector
 
+model = SentenceTransformer('pritamdeka/S-BioBert-snli-multinli-stsb', device='cuda')
 def get_vectors(texts):
     chuck_vecs=[]
     for i in range(0, len(texts.split()), 512):
@@ -41,24 +42,26 @@ def cosine_similarity(x,y):
     return numerator/float(denominator)
 
 first_stage_rank=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25_clean.csv',sep='\t')
-
 top_10_sents=[]
 for ii,rows in first_stage_rank.iterrows():
     print(ii)
+    if ii==10:
+        break
     tmp_list=[]
     vect=[]
-    query_vec=get_vectors(rows['query'])
+    #query_vec=get_vectors(rows['query'])
+    query_vec = get_sentence_vector(rows['query'])
     for text in rows['text'].split("."):
         if len(text)>1:
-            vect.append([text,get_vectors(text)])
+            vect.append([text,get_sentence_vector(text)])
     simil=[]
     for ii,vec in enumerate(vect):
-        simil.append([vec[0],1 - spatial.distance.cosine(query_vec, vec[1])])
+        simil.append([vec[0],1 - spatial.distance.cosine(query_vec.detach().numpy(), vec[1].detach().numpy())])
     d=sorted(simil,
            key=lambda x: -x[1])
     top_10_d=d[:10]
-    flat_list_text=".".join([sublist[0] for sublist in top_10_d if sublist[1] > 0.3])
-    flat_list_score=",".join([str(sublist[1]) for sublist in top_10_d if sublist[1] > 0.3])
+    flat_list_text=".".join([sublist[0] for sublist in top_10_d if sublist[1] > 0.5])
+    flat_list_score=",".join([str(sublist[1]) for sublist in top_10_d if sublist[1] > 0.5])
 
     top_10_sents.append([
         rows['qid'],
@@ -73,7 +76,7 @@ for ii,rows in first_stage_rank.iterrows():
 
 top_10_sents_df=pd.DataFrame(top_10_sents)
 top_10_sents_df.columns=['qid','docid','docno','rank','score','query','text','top_sentences','top_scores']
-top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25_top_sentences.csv',sep='\t',index=False)
+top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_top_sentences.csv',sep='\t',index=False)
 
 
 # esimil=[]
