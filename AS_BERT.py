@@ -1,6 +1,5 @@
-from transformers import BertTokenizer, BertModel
 import torch
-
+import subprocess
 medical_words=open('medical_term.txt',encoding='utf-8').readlines()
 medical_words=[i.lower().replace("\n","") for i in medical_words]
 
@@ -10,18 +9,35 @@ def medical_term(term):
     if term.lower() in medical_words:
         return 1
     else:
-        return 0.5
+        return 0
 
 def get_attention_mask(tokenized_text,indexed_tokens):
     attention_mask = []
-    attention_mask.append(0)
-    for tup in zip(tokenized_text[1:-1], indexed_tokens[1:-1]):
+    for tup in zip(tokenized_text, indexed_tokens):
         attention_mask.append(medical_term(tup[0]))
-    attention_mask.append(0)
     return attention_mask
 
+
+def show_gpu(msg):
+    """
+    """
+
+    def query(field):
+        return (subprocess.check_output(
+            ['nvidia-smi', f'--query-gpu={field}',
+             '--format=csv,nounits,noheader'],
+            encoding='utf-8'))
+
+    def to_int(result):
+        return int(result.strip().split('\n')[0])
+
+    used = to_int(query('memory.used'))
+    total = to_int(query('memory.total'))
+    pct = used / total
+    print('\n' + msg, f'{100 * pct:2.1f}% ({used} out of {total})')
+
 def get_vector(model,tokens_tensor,hidden_layer=True,hidden_layer_number=2,add=True):
-    outputs = model(tokens_tensor)
+    outputs = model(tokens_tensor.to('cuda'))
     last_hidden_state = outputs[0]
     word_embed = last_hidden_state
     if hidden_layer:
@@ -37,18 +53,16 @@ def get_vector(model,tokens_tensor,hidden_layer=True,hidden_layer_number=2,add=T
     return word_embed[0]
 
 def get_s_vector(vec,attention_mask):
-    attention_mask = torch.transpose(torch.tensor(attention_mask), 0, -1)
+    attention_mask = torch.transpose(torch.tensor(attention_mask), 0, -1).to('cuda')
     multi_vec=torch.mul(torch.transpose(vec, 0, 1), attention_mask)
     return multi_vec.sum(1)
 
 
-def get_sentence_vector(text,dynamic_attention=True,hidden_layer=False,hidden_layer_number=2,add=True):
-    marked_text="[CLS] " + text + " [SEP]"
+def get_sentence_vector(marked_text,model,tokenizer,dynamic_attention=True,hidden_layer=False,hidden_layer_number=2,add=True):
+    #marked_text="[CLS] " + text + " [SEP]"
     #model_name="dmis-lab/biobert-v1.1"
-    model_name="allenai/scibert_scivocab_uncased"
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-    model = BertModel.from_pretrained(model_name, output_hidden_states=True)
     tokenized_text = tokenizer.tokenize(marked_text)
+    tokenized_text=tokenized_text[:512]
     indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
 
     # Display the words with their indeces.
@@ -59,8 +73,9 @@ def get_sentence_vector(text,dynamic_attention=True,hidden_layer=False,hidden_la
         
     tokens_tensor = torch.tensor([indexed_tokens])
     vec = get_vector(model, tokens_tensor,hidden_layer=hidden_layer,hidden_layer_number=hidden_layer_number,add=add)
-
     sen_vec = get_s_vector(vec, attention_mask)
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()
     return sen_vec
 
 

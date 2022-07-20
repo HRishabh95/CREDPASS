@@ -6,11 +6,14 @@ import re
 import string
 
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertForNextSentencePrediction.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained('dmis-lab/biobert-v1.1')
+model = BertForNextSentencePrediction.from_pretrained('dmis-lab/biobert-v1.1')
 
-final_file=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled.csv',sep='\t',index_col=0)
+
+## TREC index_col=0
+final_file=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled_clean.csv',sep='\t')
 texts=final_file.sample(n=150000,random_state=49)['text'].values
+clean=False
 
 text=[]
 for txts in texts:
@@ -42,7 +45,10 @@ def clean_en_text(text):
   text = remove_whitespaces(text)
   return text.strip().lower()
 
-textt=[clean_en_text(i) for i in text]
+if clean:
+    textt=[clean_en_text(i) for i in text]
+else:
+    textt=text
 
 bag = [item for sentence in textt for item in sentence.split('.') if item != '']
 bag_size = len(bag)
@@ -98,7 +104,7 @@ dataset = MeditationsDataset(inputs)
 
 #### Dataloader
 
-loader = torch.utils.data.DataLoader(dataset, batch_size=16, shuffle=True)
+loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
 
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -150,4 +156,5 @@ for epoch in range(epochs):
         loop.set_postfix(loss=loss.item())
 
 
-model.save_pretrained('/home/ubuntu/rupadhyay/CREDPASS/CLEF-150k-bert-uncased-10epochs')
+model.save_pretrained('/home/ubuntu/rupadhyay/CREDPASS/CLEF-150k-biobert-10epochs/')
+tokenizer.save_pretrained('/home/ubuntu/rupadhyay/CREDPASS/CLEF-150k-biobert-10epochs/')

@@ -14,3 +14,8 @@ for j in zip(ids,querys):
 
 import pandas as pd
 pd.DataFrame(clef_topics).to_csv("/home/ubuntu/rupadhyay/CREDPASS/clef_topics.csv",sep=' ',header=False,index=False)
+
+
+import pandas as pd
+d=pd.read_csv('/tmp/pycharm_project_329/topics_des.csv',sep=' ',header=None,index_col=0)
+d.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec_topics_desc.csv',index=None,header=None,sep=' ')
