@@ -11,17 +11,17 @@ import torch
 # model_name = "dmis-lab/biobert-v1.1"
 # model_name = "bert-base-uncased"
 model_name = "dmis-lab/biobert-v1.1"
-# model_name = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
+#model_name = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
 tokenizer = BertTokenizer.from_pretrained(model_name)
 #model_name = '/home/ubuntu/rupadhyay/CREDPASS/TREC-150k-biobert-10epochs/'
 model = BertModel.from_pretrained(model_name, output_hidden_states=True)
 model.to('cuda')
 
 
-fd=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/family_doctor_sentences.csv',sep='\t',names=['disease_name','text'],header=None)
+fd=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/mayoclinic_sentences.csv',sep='\t',names=['disease_name','text'],header=None)
 #fd=fd.iloc[1:,:]
-ts_clef=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_top_sentences_SGPT.csv',sep='\t')
-
+ts_clef=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_top_sentences.csv',sep='\t')
+data='TREC'
 def get_vectors(texts):
     chuck_vecs=[]
     for i in range(0, len(texts.split()), 512):
@@ -57,7 +57,7 @@ def get_top_portal_sentences(doc_vec,por_vec):
         fsimi=simi/len(d)
         finsimil.append([d[0][0],fsimi])
     doc_simi=0
-    weights_10 = [0.2, 0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05]
+    weights_10 = [0.2, 0.15, 0.15, 0.1, 0.1, 0.1, 0.1, 0.05, 0.025, 0.025]
     #weights_10 = [0.25, 0.15, 0.125, 0.125, 0.1, 0.05, 0.05, 0.05,0.05,0.05]
     for ii,finsimi in enumerate(finsimil):
         doc_simi+=float(finsimi[-1])*weights_10[ii]
@@ -77,7 +77,10 @@ for ii,rows in ts_clef.iterrows():
         tmp_list=[]
         #query=get_vectors(rows['query'])
         query=get_sentence_vector(rows['query'], model, tokenizer, dynamic_attention=False,hidden_layer=False)
-        top_topics=get_most_similar_disease(dis_vect,query)
+        if data=='TREC':
+            top_topics=[418]
+        else:
+            top_topics=get_most_similar_disease(dis_vect,query)
         doc_vec = []
         if type( rows['top_sentences']) is str:
             for text in rows['top_sentences'].split("."):
@@ -111,7 +114,7 @@ for ii,rows in ts_clef.iterrows():
 
 top_10_sents_df=pd.DataFrame(final_simi)
 top_10_sents_df.columns=['qid','docid','docno','rank','score','query','text','noret','igs_score']
-top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_SRet_10_PRet_10_SGPT.csv',sep='\t',index=False)
+top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_SRet_10_PRet_10.csv',sep='\t',index=False)
 
 #clef2020_BM25_SRet_10_PRet_10_first_weight_fine_tunned.csv
 #clef2020_BM25_SRet_10_PRet_10_SentTrans_Biobert_3top.csv === trec

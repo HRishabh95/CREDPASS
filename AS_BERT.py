@@ -37,7 +37,7 @@ def show_gpu(msg):
     print('\n' + msg, f'{100 * pct:2.1f}% ({used} out of {total})')
 
 def get_vector(model,tokens_tensor,hidden_layer=True,hidden_layer_number=2,add=True):
-    outputs = model(tokens_tensor.to('cuda'))
+    outputs = model(tokens_tensor)
     last_hidden_state = outputs[0]
     word_embed = last_hidden_state
     if hidden_layer:
@@ -50,10 +50,12 @@ def get_vector(model,tokens_tensor,hidden_layer=True,hidden_layer_number=2,add=T
             word_embed = torch.stack(hidden_states).sum(0)
         else:
             word_embed = torch.cat([hidden_states[i] for i in range(1, len(hidden_states)+1)], dim=-1)
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()
     return word_embed[0]
 
 def get_s_vector(vec,attention_mask):
-    attention_mask = torch.transpose(torch.tensor(attention_mask), 0, -1).to('cuda')
+    attention_mask = torch.transpose(torch.tensor(attention_mask), 0, -1)
     multi_vec=torch.mul(torch.transpose(vec, 0, 1), attention_mask)
     return multi_vec.sum(1)
 
@@ -73,6 +75,7 @@ def get_sentence_vector(marked_text,model,tokenizer,dynamic_attention=True,hidde
         
     tokens_tensor = torch.tensor([indexed_tokens])
     vec = get_vector(model, tokens_tensor,hidden_layer=hidden_layer,hidden_layer_number=hidden_layer_number,add=add)
+
     sen_vec = get_s_vector(vec, attention_mask)
     torch.cuda.empty_cache()
     torch.cuda.synchronize()

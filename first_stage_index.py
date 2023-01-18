@@ -64,7 +64,7 @@ if indexing:
         indexref3 = pt.IndexRef.of(f'''{index_path}/data.properties''')
 
 indexref3 = pt.IndexRef.of(f'''{config[data_set]['index_path']}/data.properties''')
-BM251 = pt.BatchRetrieve(indexref3, num_results=100, controls = {"wmodel": "BM25"})
+BM251 = pt.BatchRetrieve(indexref3, num_results=100, controls = {"wmodel": "BM25F"})
 
 
 topics=pt.io.read_topics(config[data_set]['topics'],format='singleline')

@@ -1,24 +1,24 @@
 import pandas as pd
 import numpy as np
-from sentence_transformers import SentenceTransformer
+#from sentence_transformers import SentenceTransformer
 import torch
 import math
 from scipy import spatial
 from AS_BERT import get_sentence_vector,show_gpu
-from transformers import BertTokenizer, BertModel, RobertaTokenizer, RobertaModel, BertweetTokenizer
-model = SentenceTransformer('pritamdeka/S-BioBert-snli-multinli-stsb', device='cuda')
+from transformers import BertTokenizer, BertModel, RobertaTokenizer, RobertaModel
+#model = SentenceTransformer('pritamdeka/S-BioBert-snli-multinli-stsb', device='cuda')
 
 #model_name = "bert-base-uncased"
 #model_name = "dmis-lab/biobert-v1.1"
-model_name = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
-#model_name = 'deepset/covid_bert_base'
+#model_name = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
+model_name = 'deepset/covid_bert_base'
 tokenizer = BertTokenizer.from_pretrained(model_name)
 model = BertModel.from_pretrained(model_name, output_hidden_states=True)
 
 
-model_name = 'allenai/biomed_roberta_base'
-tokenizer = RobertaTokenizer.from_pretrained(model_name)
-model=RobertaModel.from_pretrained(model_name, output_hidden_states=True)
+#model_name = 'allenai/biomed_roberta_base'
+#tokenizer = RobertaTokenizer.from_pretrained(model_name)
+#model=RobertaModel.from_pretrained(model_name, output_hidden_states=True)
 #model_name = '/home/ubuntu/rupadhyay/CREDPASS/TREC-150k-biobert-10epochs/'
 #model_name = "dmis-lab/biobert-v1.1"
 
@@ -97,7 +97,7 @@ for ii,rows in first_stage_rank.iterrows():
 
 top_10_sents_df=pd.DataFrame(top_10_sents)
 top_10_sents_df.columns=['qid','docid','docno','rank','score','query','text','top_sentences','top_scores']
-top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_top_sentences_DAtt_med.csv',sep='\t',index=False)
+top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_top_sentences.csv',sep='\t',index=False)
 
 #clef2020_BM25_top_sentences_att_SciBERT --- Fine tunned model bert-uncased
 #clef2020_BM25_top_sentences --- Biobert

@@ -66,7 +66,7 @@ def get_normalized_score(final_df):
     final_df['score_zscore']=final_df['score'].apply(mapfunct)
     return final_df
 #top_10_sents_df=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_SRet_10_PRet_10_first_weight_fine_tunned.csv',sep='\t')
-file_path='/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_SRet_10_PRet_10_SGPT_SGPT.csv'
+file_path='/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_SRet_10_PRet_10_micro.csv'
 #file_path='/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_top_sentences_fine_tunned_Biobert.csv'
 top_10_sents_df=pd.read_csv(file_path,sep='\t')
 normalized_df = get_zscore(top_10_sents_df)
@@ -92,4 +92,4 @@ result_df.columns=['qid','Q0','docno','rank','score']
 result_df.drop_duplicates(subset=['qid','docno'],inplace=True)
 syntax='wa_1000_ret10'
 result_df['experiment']=syntax
-result_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/result/60_40_TREC_SGPT_%s.csv'%syntax, sep=' ', index=None, header=None)
+result_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/result/60_40_TREC_micro_%s.csv'%syntax, sep=' ', index=None, header=None)

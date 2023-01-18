@@ -1,7 +1,7 @@
-docs=50
+docs=100
 SUMMARY="/home/ubuntu/rupadhyay/CREDPASS/result/40_60_finetuned_CLEF_wa_1000_ret10.${docs}.summary"
 printf "run\tqrels\tmeasure\ttopic\tscore\n" > $SUMMARY
-RUN_FILE_PATH="/home/ubuntu/rupadhyay/CREDPASS/result/60_40_TREC_SGPT_wa_1000_ret10.csv"
+RUN_FILE_PATH="/home/ubuntu/rupadhyay/CREDPASS/result/60_40_TREC_micro_wa_1000_ret10.csv"
 #RUN_FILE_PATH="/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25.csv"
 QRELS="/home/ubuntu/rupadhyay/CREDPASS"
 
