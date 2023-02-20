@@ -37,7 +37,7 @@ def make_docs_cerche(dfs):
 
 config={'TREC':{'file_path':'/home/ubuntu/rupadhyay/CREDPASS/TREC2020_1M_labeled_clean.csv',
                 'index_path':'/home/ubuntu/rupadhyay/CREDPASS/trec2020_bm25',
-                'topics':'/home/ubuntu/rupadhyay/CREDPASS/trec_topics_desc.csv'},
+                'topics':'/home/ubuntu/rupadhyay/dataset/TREC/topics.csv'},
         'CLEF':{'file_path':'/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled_clean.csv',
                 'index_path':'/home/ubuntu/rupadhyay/CREDPASS/clef2020_bm25',
                 'topics':'/home/ubuntu/rupadhyay/CREDPASS/clef_topics.csv'}}
@@ -58,13 +58,13 @@ if indexing:
     index_doc=index_doc[['docno','text']]
     if not os.path.exists(f'''{index_path}/data.properties'''):
         indexer = pt.DFIndexer(index_path, overwrite=True, verbose=True, Threads=8)
-        #indexer.setProperty("termpipelines", "PorterStemmer") # Removes the default PorterStemmer (English)
+        indexer.setProperty("termpipelines", "PorterStemmer") # Removes the default PorterStemmer (English)
         indexref3 = indexer.index(index_doc["text"], index_doc)
     else:
         indexref3 = pt.IndexRef.of(f'''{index_path}/data.properties''')
 
 indexref3 = pt.IndexRef.of(f'''{config[data_set]['index_path']}/data.properties''')
-BM251 = pt.BatchRetrieve(indexref3, num_results=100, controls = {"wmodel": "BM25F"})
+BM251 = pt.BatchRetrieve(indexref3, num_results=500, controls = {"wmodel": "BM25"})
 
 
 topics=pt.io.read_topics(config[data_set]['topics'],format='singleline')
@@ -86,5 +86,5 @@ docs=docs[['docno','text']]
 merged_results=pd.merge(results,docs,on=['docno'])
 #merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25.csv',sep='\t',index=None)
 #merged_results['text']=merged_results['text'].apply(clean_en_text)
-merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/TREC2020_BM25_clean_100.csv',sep='\t',index=None)
+merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/docs/TREC2020_BM25_clean_100.csv',sep='\t',index=None)
 

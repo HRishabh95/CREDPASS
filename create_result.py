@@ -65,6 +65,8 @@ def get_zscore(final_df):
 def get_normalized_score(final_df):
     final_df['score_zscore']=final_df['score'].apply(mapfunct)
     return final_df
+
+
 #top_10_sents_df=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_SRet_10_PRet_10_first_weight_fine_tunned.csv',sep='\t')
 file_path='/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_SRet_10_PRet_10_micro.csv'
 #file_path='/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_top_sentences_fine_tunned_Biobert.csv'
