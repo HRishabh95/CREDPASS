@@ -1,12 +1,9 @@
 import os
 import pandas as pd
 import pyterrier as pt
-import pytrec_eval
 if not pt.started():
   pt.init()
 import sys
-
-
 os.environ['JAVA_HOME'] = "/usr/lib/jvm/java-1.11.0-openjdk-amd64/"
 import re
 import string
@@ -38,10 +35,10 @@ def make_docs_cerche(dfs):
       docs.append({'id':df['docno'],'title':'','article':clean_en_text(df['text'])})
   return docs
 
-config={'TREC':{'file_path':'/home/ubuntu/rupadhyay/CREDPASS/TREC2020_1M_labeled.csv',
+config={'TREC':{'file_path':'/home/ubuntu/rupadhyay/CREDPASS/TREC2020_1M_labeled_clean.csv',
                 'index_path':'/home/ubuntu/rupadhyay/CREDPASS/trec2020_bm25',
-                'topics':'/tmp/pycharm_project_889/trec_topics.csv'},
-        'CLEF':{'file_path':'/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled.csv',
+                'topics':'/home/ubuntu/rupadhyay/dataset/TREC/topics.csv'},
+        'CLEF':{'file_path':'/home/ubuntu/rupadhyay/CREDPASS/Clef2020_1M_labeled_clean.csv',
                 'index_path':'/home/ubuntu/rupadhyay/CREDPASS/clef2020_bm25',
                 'topics':'/home/ubuntu/rupadhyay/CREDPASS/clef_topics.csv'}}
 
@@ -49,13 +46,14 @@ if len(sys.argv)>3:
     data_set=sys.argv[1]
     indexing=sys.argv[2]
 else:
-    data_set = 'CLEF'
+    data_set = 'TREC'
     indexing = False
 
 if indexing:
-    index_doc=pd.read_csv(config[data_set]['file_path'],sep='\t',index_col=0)
+    index_doc=pd.read_csv(config[data_set]['file_path'],sep='\t')
     index_doc=index_doc.dropna(subset=['text'])
     index_doc.drop_duplicates(subset=['text'],inplace=True)
+
     index_path=config[data_set]['index_path']
     index_doc=index_doc[['docno','text']]
     if not os.path.exists(f'''{index_path}/data.properties'''):
@@ -66,15 +64,27 @@ if indexing:
         indexref3 = pt.IndexRef.of(f'''{index_path}/data.properties''')
 
 indexref3 = pt.IndexRef.of(f'''{config[data_set]['index_path']}/data.properties''')
-BM251 = pt.BatchRetrieve(indexref3, controls = {"wmodel": "BM25"}, properties={
-    'tokeniser': 'UTFTokeniser',
-    'termpipelines': 'Stopwords,PorterStemmer',})
+BM251 = pt.BatchRetrieve(indexref3, num_results=500, controls = {"wmodel": "BM25"})
 
 
 topics=pt.io.read_topics(config[data_set]['topics'],format='singleline')
 results=BM251.transform(topics)
 
-docs=pd.read_csv(config[data_set]['file_path'],sep='\t',index_col=0)
+
+results = results[~results["qid"].isin(['28'])]
+results['Q0']=0
+result=results[['qid','Q0','docno','rank','score']]
+results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25.csv',sep=' ', index=None, header=None)
+
+qrels_path='/home/ubuntu/rupadhyay/CREDPASS/trec_qrels_top.csv'
+qrels = pt.io.read_qrels(qrels_path)
+eval = pt.Utils.evaluate(results,qrels,metrics=["ndcg"], perquery=True)
+# eval.to_csv('/home/ubuntu/rupadhyay/CREDPASS/clef_map.csv',sep='\t')
+
+docs=pd.read_csv(config[data_set]['file_path'],sep='\t')
 docs=docs[['docno','text']]
-merged_results=pd.merge(results,docs,on=['docno'],how='inner')
-merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25.csv',sep='\t',index=None)
+merged_results=pd.merge(results,docs,on=['docno'])
+#merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25.csv',sep='\t',index=None)
+#merged_results['text']=merged_results['text'].apply(clean_en_text)
+merged_results.to_csv('/home/ubuntu/rupadhyay/CREDPASS/docs/TREC2020_BM25_clean_100.csv',sep='\t',index=None)
+

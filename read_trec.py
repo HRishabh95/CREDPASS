@@ -7,6 +7,29 @@ import requests
 from bs4 import BeautifulSoup
 from langdetect import detect
 import random
+import string
+import re
+PUNCTUATIONS = string.punctuation
+PUNCTUATIONS = PUNCTUATIONS.replace(".",'')
+
+
+def remove_punctuation(text):
+  trans = str.maketrans(dict.fromkeys(PUNCTUATIONS, ' '))
+  return text.translate(trans)
+
+def remove_whitespaces(text):
+    return " ".join(text.split())
+
+def clean_en_text(text):
+  """
+  text
+  """
+  text = re.sub(r"[^A-Za-z0-9(),.!?%\'`]", " ", text)
+  text= re.sub(r'\d+', '',text)
+  text = remove_punctuation(text)
+  text = remove_whitespaces(text)
+  return text.strip().lower()
+
 from multiprocessing import Pool
 random.seed(49)
 
@@ -74,8 +97,10 @@ trec_df=pd.concat([first_df,second_df,third_df,fourth_df])
 trec_df.to_csv("/home/ubuntu/rupadhyay/CREDPASS/TREC_1M.csv",sep='\t')
 
 import pandas as pd
-trec_df=pd.read_csv("/home/ubuntu/rupadhyay/CREDPASS/TREC_1M.csv",sep='\t',index_col=0)
+#trec_df=pd.read_csv("/home/ubuntu/rupadhyay/CREDPASS/TREC_1M.csv",sep='\t',index_col=0)
 labeled_file=pd.read_csv('/tmp/pycharm_project_889/labeled_trec20201.csv',sep='\t',header=None,index_col=0)
 labeled_file.columns=['docno','text']
-final_file=pd.concat([trec_df,labeled_file]).drop_duplicates().reset_index(drop=True)
-final_file.to_csv('/home/ubuntu/rupadhyay/CREDPASS/TREC2020_1M_labeled.csv',sep='\t')
+final_file=pd.concat([labeled_file,trec_df]).drop_duplicates().reset_index(drop=True)
+final_file['text']=final_file['text'].apply(clean_en_text)
+final_file=final_file.drop_duplicates(subset=['docno']).reset_index(drop=True)
+final_file.to_csv('/home/ubuntu/rupadhyay/CREDPASS/TREC2020_1M_labeled_clean.csv',sep='\t',index=None)
