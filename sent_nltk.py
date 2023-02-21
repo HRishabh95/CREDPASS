@@ -35,7 +35,8 @@ args = TTSettings(num_beams=5, min_length=1)
 
 
 #model_name = "bert-base-uncased"
-model_name = "emilyalsentzer/Bio_ClinicalBERT"
+# model_name = "emilyalsentzer/Bio_ClinicalBERT"
+model_name = "pritamdeka/S-BioBert-snli-multinli-stsb"
 #model_name = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
 #model_name = 'deepset/covid_bert_base'
 # tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -130,6 +131,6 @@ for ii,rows in first_stage_rank.iterrows():
 
 top_10_sents_df=pd.DataFrame(top_10_sents)
 top_10_sents_df.columns=['qid','docid','docno','rank','score','query','text','top_sentences','top_scores']
-top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_biobert_nltk_correct.csv',sep='\t',index=False)
+top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_biobert_nltk_correct_sent.csv',sep='\t',index=False)
 
 
