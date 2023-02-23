@@ -76,8 +76,8 @@ def cosine_similarity(x,y):
     denominator = square_rooted(x)*square_rooted(y)
     return numerator/float(denominator)
 
-#first_stage_rank=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25_clean_100.csv',sep='\t')
-first_stage_rank=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/TREC2020_BM25_clean_100.csv',sep='\t')
+first_stage_rank=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/Clef2020_BM25_clean_100.csv',sep='\t')
+# first_stage_rank=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/TREC2020_BM25_clean_100.csv',sep='\t')
 
 top_10_sents=[]
 for ii,rows in first_stage_rank.iterrows():
@@ -131,6 +131,6 @@ for ii,rows in first_stage_rank.iterrows():
 
 top_10_sents_df=pd.DataFrame(top_10_sents)
 top_10_sents_df.columns=['qid','docid','docno','rank','score','query','text','top_sentences','top_scores']
-top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_biobert_nltk_correct_sent.csv',sep='\t',index=False)
+top_10_sents_df.to_csv('/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_biobert_nltk_correct_sent.csv',sep='\t',index=False)
 
 
