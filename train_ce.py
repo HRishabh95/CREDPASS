@@ -12,11 +12,11 @@ from sentence_transformers.evaluation import InformationRetrievalEvaluator
 
 cred_score=False
 
-data='trec'
+data='clef'
 if data=='trec':
-    dataset = datasets.load_dataset("json", data_files={"train": ["train_qid_trec_bm25_pass.jsonl"]})
+    dataset = datasets.load_dataset("json", data_files={"train": ["train_qid_trec_bm25_pass_5.jsonl"]})
 else:
-    dataset = datasets.load_dataset("json", data_files={"train": ["train_qid_clef_bm25.jsonl"]})
+    dataset = datasets.load_dataset("json", data_files={"train": ["train_qid_clef_bm25_pass_20.jsonl"]})
 
 
 train_samples = []
@@ -30,9 +30,9 @@ for row in tqdm(dataset['train']):
     ))
 
 if data=='trec':
-    dataset = datasets.load_dataset("json", data_files={"test": ["test_qid_trec_bm25_pass.jsonl"]})
+    dataset = datasets.load_dataset("json", data_files={"test": ["test_qid_trec_bm25_pass_5.jsonl"]})
 else:
-    dataset = datasets.load_dataset("json", data_files={"test": ["test_qid_clef_bm25.jsonl"]})
+    dataset = datasets.load_dataset("json", data_files={"test": ["test_qid_clef_bm25_pass_20.jsonl"]})
 
 dataset_pos = dataset.filter(
     lambda x: True if x['label'] == 0 else False
@@ -79,7 +79,7 @@ if cred_score:
 else:
     result_file = f'''{model_path}/result/no_c_score.csv'''
 
-for batch_number, batch in enumerate([2,3,4,5,6,8,10,16,20]):
+for batch_number, batch in enumerate([2,3,4,6,8,10,12]):
     for epoch_number, epoch in enumerate([1,2,3,4,5,6,7,8,9]):
         print(batch, epoch)
         train_batch_size = batch
@@ -87,17 +87,17 @@ for batch_number, batch in enumerate([2,3,4,5,6,8,10,16,20]):
         train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=train_batch_size)
         evaluator = CERerankingEvaluator(dev_sample, name='train-eval')
         if cred_score:
-            model_save_path = f'''./cross_encoder_MRR_{model_name.split("/")[-1]}_{data}/cross_encoder_{epoch}_{train_batch_size}_''' + 'c_score_only'
+            model_save_path = f'''./cross_encoder_MRR_{model_name.split("/")[-1]}_{data}_10/cross_encoder_{epoch}_{train_batch_size}_''' + 'c_score_only'
             mkdir_p(model_save_path)
         else:
-            model_save_path = f'''./cross_encoder_MRR_{model_name.split("/")[-1]}_{data}/cross_encoder_{epoch}_{train_batch_size}_passage'''
+            model_save_path = f'''./cross_encoder_MRR_{model_name.split("/")[-1]}_{data}_20/cross_encoder_{epoch}_{train_batch_size}_passage'''
             mkdir_p(model_save_path)
 
         if not os.path.isfile(model_save_path + "/pytorch_model.bin"):
             print("Training")
             warmup_steps = math.ceil(len(train_dataloader) * epoch * 0.1)  # 10% of train data for warm-up
 
-            model = CrossEncoder(model_name, num_labels=1, max_length=510,
+            model = CrossEncoder(model_name, num_labels=1, max_length=512,
                                  automodel_args={'ignore_mismatched_sizes': True})
 
             # Train the model

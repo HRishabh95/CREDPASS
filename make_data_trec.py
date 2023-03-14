@@ -30,8 +30,9 @@ def trec_generate(f):
   return df
 
 
+passage_size=5
 #Bm25 retrived
-docs_100=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_biobert_nltk_correct.csv',sep='\t')
+docs_100=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_biobert_nltk_correct_sent_%s.csv'%passage_size,sep='\t')
 
 qrels=pd.read_csv('/home/ubuntu/rupadhyay/2020-derived-qrels//misinfo-qrels.2aspects.useful-credible',sep=' ',
                   names=['qid','Q0','docno','t','c'])
@@ -58,18 +59,18 @@ for qid in test_qid:
     final_dataset_test.append(docs_merged[docs_merged['qid'] == qid])
 
 
-pd.concat(final_dataset_train).to_csv('./train_qid_clef_bm25.csv', sep=';')
-pd.concat(final_dataset_test).to_csv('./test_qid_clef_bm25.csv', sep=';')
+pd.concat(final_dataset_train).to_csv('./train_qid_trec_bm25_sent_%s.csv'%passage_size, sep=';')
+pd.concat(final_dataset_test).to_csv('./test_qid_trec_bm25_sent_%s.csv'%passage_size, sep=';')
 
 if json_required:
     final_dataset_train = json.loads(pd.concat(final_dataset_train).to_json(orient='records'))
     final_dataset_test = json.loads(pd.concat(final_dataset_test).to_json(orient='records'))
 
-    with open("train_qid_trec_bm25_pass.jsonl", "w") as f:
+    with open("train_qid_trec_bm25_pass_%s.jsonl"%passage_size, "w") as f:
         for item in final_dataset_train:
             f.write(json.dumps(item) + "\n")
 
-    with open("test_qid_trec_bm25_pass.jsonl", "w") as f:
+    with open("test_qid_trec_bm25_pass_%s.jsonl"%passage_size, "w") as f:
         for item in final_dataset_test:
             f.write(json.dumps(item) + "\n")
 

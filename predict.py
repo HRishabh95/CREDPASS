@@ -11,16 +11,21 @@ from utils import mkdir_p
 
 cred_score=False
 
-data='clef'
+data='trec'
 
 if data=='trec':
     #TREC
-    docs_100=pd.read_csv('/tmp/pycharm_project_631/docs/docs_top_100.csv',sep='\t')
-    dataset=docs_100[['qid','query','docno','text','score']]
+    docs_100=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/trec2020_BM25_biobert_nltk_correct_sent.csv',sep='\t')
+    dataset=docs_100[['qid','query','docno','top_sentences','score']]
+    dataset.columns=['qid','query','docno','text','score']
+    dataset['text']=dataset['text'].str.replace("\t"," ")
+    dataset.dropna(subset=['text'], inplace=True)
+
+
 #CLEF
 
 if data=='clef':
-    docs_100=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_biobert_nltk_correct_sent.csv',sep='\t')
+    docs_100=pd.read_csv('/home/ubuntu/rupadhyay/CREDPASS/clef2020_BM25_biobert_nltk_correct_sent_5.csv',sep='\t')
     dataset=docs_100[['qid','query','docno','top_sentences','score']]
     dataset.columns=['qid','query','docno','text','score']
     dataset['text']=dataset['text'].str.replace("\t"," ")
@@ -31,8 +36,8 @@ if data=='clef':
 for batch_number, batch in enumerate([2,3,4,5,6,8,10,16,20]):
     for epoch_number, epoch in enumerate([1,2,3,4,5,6,7,8,9]):
         print(batch,epoch)
-        model_path = f'''./cross_encoder_MRR_biobert-v1.1_trec/cross_encoder_{epoch}_{batch}_passage/'''
-        file_path = f'''./cross_encoder_MRR_biobert-v1.1_trec/results_evaluation/cross_encoder_biobert_{epoch}_{batch}_passage.csv'''
+        model_path = f'''./cross_encoder_MRR_biobert-v1.1_clef_20/cross_encoder_{epoch}_{batch}_passage/'''
+        file_path = f'''./cross_encoder_MRR_biobert-v1.1_clef_20/results_evaluation/cross_encoder_biobert_{epoch}_{batch}_passage.csv'''
         mkdir_p("/".join(file_path.split("/")[:-1]))
         if not os.path.isfile(file_path):
             if os.path.isfile(model_path+"/config.json"):
@@ -47,7 +52,7 @@ for batch_number, batch in enumerate([2,3,4,5,6,8,10,16,20]):
                 qids = np.unique(result_df.qid.values)
                 sorted_dfs=[]
                 for qid in qids:
-                    if qid!=28 and qid!=33:
+                    if qid!=28 and qid!=33 and qid!=35:
                         qid_df=result_df.loc[result_df['qid']==qid]
                         sorted_qid_df=qid_df.sort_values('score',ascending=False).reset_index()
                         sorted_qid_df['n_rank']=1
@@ -61,6 +66,6 @@ for batch_number, batch in enumerate([2,3,4,5,6,8,10,16,20]):
                 if cred_score:
                     result_df['experiment']=f'''cross_encoder_bert_{epoch}_{batch}_bm25'''
                 else:
-                    result_df['experiment'] = f'''cross_encoder_biobert_{epoch}_{batch}_passage'''
+                    result_df['experiment'] = f'''cross_encoder_biobert_{epoch}_{batch}_passage_10'''
 
                 result_df.to_csv(file_path,sep=' ',index=None,header=None)
